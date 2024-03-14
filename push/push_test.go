@@ -1,4 +1,4 @@
-package expo
+package push
 
 import (
 	"testing"
@@ -11,7 +11,7 @@ func TestValidateResponseErrorStatus(t *testing.T) {
 		Details: map[string]interface{}{},
 	}
 	err := response.ValidateResponse()
-	typed, ok := err.(*PushResponseError)
+	typed, ok := err.(*ResponseError)
 	if !ok {
 		t.Error("Incorrect error type")
 	}
