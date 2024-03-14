@@ -1,4 +1,4 @@
-package expo
+package push
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ type ClientConfig struct {
 	APIURL      string
 	AccessToken string
 	HTTPClient  *http.Client
-	fcmV1       bool
+	FCMv1       bool
 }
 
 // NewClient creates a new Exponent push client
@@ -58,7 +58,7 @@ func NewClient(config *ClientConfig) *Client {
 		if config.HTTPClient != nil {
 			httpClient = config.HTTPClient
 		}
-		if config.fcmV1 {
+		if config.FCMv1 {
 			c.fcmV1 = true
 		}
 	}
