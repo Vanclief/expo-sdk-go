@@ -18,12 +18,13 @@ const (
 // DefaultHTTPClient is the default *http.Client for making API requests
 var DefaultHTTPClient = &http.Client{}
 
-// PushClient is an object used for making push notification requests
-type PushClient struct {
+// Client is an object used for making push notification requests
+type Client struct {
 	host        string
 	apiURL      string
 	accessToken string
 	httpClient  *http.Client
+	fcmV1       bool
 }
 
 // ClientConfig specifies params that can optionally be specified for alternate
@@ -33,12 +34,13 @@ type ClientConfig struct {
 	APIURL      string
 	AccessToken string
 	HTTPClient  *http.Client
+	fcmV1       bool
 }
 
-// NewPushClient creates a new Exponent push client
+// NewClient creates a new Exponent push client
 // See full API docs at https://docs.getexponent.com/versions/v13.0.0/guides/push-notifications.html#http-2-api
-func NewPushClient(config *ClientConfig) *PushClient {
-	c := new(PushClient)
+func NewClient(config *ClientConfig) *Client {
+	c := new(Client)
 	host := DefaultHost
 	apiURL := DefaultBaseAPIURL
 	httpClient := DefaultHTTPClient
@@ -56,6 +58,9 @@ func NewPushClient(config *ClientConfig) *PushClient {
 		if config.HTTPClient != nil {
 			httpClient = config.HTTPClient
 		}
+		if config.fcmV1 {
+			c.fcmV1 = true
+		}
 	}
 	c.host = host
 	c.apiURL = apiURL
@@ -68,7 +73,7 @@ func NewPushClient(config *ClientConfig) *PushClient {
 // @param push_message: A PushMessage object
 // @return an array of PushResponse objects which contains the results (one per each recipient).
 // @return error if any requests failed
-func (c *PushClient) Publish(message *PushMessage) ([]PushResponse, error) {
+func (c *Client) Publish(message *PushMessage) ([]PushResponse, error) {
 	responses, err := c.PublishMultiple([]PushMessage{*message})
 	if err != nil {
 		return nil, err
@@ -80,11 +85,11 @@ func (c *PushClient) Publish(message *PushMessage) ([]PushResponse, error) {
 // @param push_messages: An array of PushMessage objects.
 // @return an array of PushResponse objects which contains the results.
 // @return error if the request failed
-func (c *PushClient) PublishMultiple(messages []PushMessage) ([]PushResponse, error) {
+func (c *Client) PublishMultiple(messages []PushMessage) ([]PushResponse, error) {
 	return c.publishInternal(messages)
 }
 
-func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, error) {
+func (c *Client) publishInternal(messages []PushMessage) ([]PushResponse, error) {
 	// Used for sanity check
 	var expectedReceipts int = 0
 
@@ -101,7 +106,15 @@ func (c *PushClient) publishInternal(messages []PushMessage) ([]PushResponse, er
 		// There will be as many receipts as there is total recipients for each message
 		expectedReceipts += len(message.To)
 	}
-	url := fmt.Sprintf("%s%s/push/send", c.host, c.apiURL)
+
+	var url string
+
+	if c.fcmV1 {
+		url = fmt.Sprintf("%s%s/push/send?useFcmV1=true", c.host, c.apiURL)
+	} else {
+		url = fmt.Sprintf("%s%s/push/send", c.host, c.apiURL)
+	}
+
 	jsonBytes, err := json.Marshal(messages)
 	if err != nil {
 		return nil, err
