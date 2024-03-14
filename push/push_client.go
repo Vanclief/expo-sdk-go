@@ -1,4 +1,4 @@
-package expo
+package push
 
 import (
 	"bytes"
@@ -34,7 +34,7 @@ type ClientConfig struct {
 	APIURL      string
 	AccessToken string
 	HTTPClient  *http.Client
-	fcmV1       bool
+	FCMV1       bool
 }
 
 // NewClient creates a new Exponent push client
